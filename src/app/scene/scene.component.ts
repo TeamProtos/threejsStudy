@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, Input, ViewChild, HostListener } 
 import * as THREE from 'three-full';
 import * as Stats from 'stats.js';
 import * as dat from 'dat.gui';
+import { Texture } from 'three';
 //import "./js/EnableThreeExamples";
 
 @Component({
@@ -21,9 +22,18 @@ export class SceneComponent implements AfterViewInit {
 
     public controls: THREE.OrbitControls;
     public cube: THREE.Mesh;
+    public orange: THREE.Mesh;
+    public trophy: THREE.Mesh;
     public animationFrame: any;
     public stats: Stats;
-    public gui: dat.GUI; 
+    public gui: dat.GUI;
+    
+    private daeLoader = new THREE.ColladaLoader();
+    private objLoader = new THREE.OBJLoader();
+    private textureLoader = new THREE.TextureLoader();	
+
+    private radianX: number = 0;    
+    private radianY: number = 0;
 
     @ViewChild('canvas') private canvasRef: ElementRef;
 
@@ -52,24 +62,64 @@ export class SceneComponent implements AfterViewInit {
         const axes = new THREE.AxesHelper(200);
         this.scene = new THREE.Scene();
         
-        //this.scene.add(grid);
-        //this.scene.add(axes);
-        const loader = new THREE.ColladaLoader();
-        loader.load('./assets/model/Orange_dae/Orange.dae', this.onModelLoadingCompleted);
+        this.scene.add(grid);
+        this.scene.add(axes);
+        
+        //this.daeLoader.load('./assets/model/audiR8/audiR8.dae', this.onDaeLoadingCompleted);
+        //this.objLoader.load('./assets/model/trophy.obj', this.onModelLoadingCompleted, (xhr)=>{ console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' ); });
+        this.textureLoader.load("./assets/img/universe.jpg", this.onTextureLoadingCompleted);
+        
+            
     }
 
-    private onModelLoadingCompleted = (collada) => {
-        console.log('collada', collada);
-        let modelScene = collada.scene;
+    private onTextureLoadingCompleted = (data) => {
+        let material_univ = new THREE.MeshBasicMaterial({
+            map : data,
+            side : THREE.BackSide
+        });
+        let geometry_univ = new THREE.SphereGeometry(50, 32, 32);
+        let mesh = new THREE.Mesh(geometry_univ, material_univ);
+        
+        this.scene.add(mesh);
+    }
+
+    private onDaeLoadingCompleted = (model) => {
+        let modelScene = model.scene;
         modelScene.position.set(0, 0, 0);
         this.scene.add(modelScene);
+
+        this.render();
+    }
+
+    private onModelLoadingCompleted = (model) => {
+        console.log('model', model);
+        /*
+        this.textureLoader.load("./assets/img/wood.jpg", (data) => {
+            let trophyTexture: Texture;
+            trophyTexture = data;
+            model.children.forEach((mesh) => {
+                console.log('item', mesh);
+                mesh.material = new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: false, specular: 0xff0000, shininess : 70, envMap : trophyTexture });
+            });
+        });
+        */
+        model.position.set(0, -5, 0);
+        model.scale.x = 0.01;
+        model.scale.y = 0.01;
+        model.scale.z = 0.01;
+
+        this.scene.add(model);
+        
         this.render();
     }
 
     private createLight() {
-        const light = new THREE.PointLight(0xffffff, 1);
-        light.position.set(-80, 180, 180);
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        const lightHelper = new THREE.DirectionalLightHelper( light, 15 );
+        light.position.set(-50, 50, 50);
+        light.angle = Math.PI / 5;
         this.scene.add(light);
+        this.scene.add(lightHelper);
     }
 
     private createCamera() {
@@ -109,7 +159,7 @@ export class SceneComponent implements AfterViewInit {
         this.renderer.setClearColor(0x000000, 1);
         this.renderer.autoClear = true;        
 
-        //this.render();
+        this.render();
     }
 
     public render = () => {
@@ -118,6 +168,7 @@ export class SceneComponent implements AfterViewInit {
         this.animationBoxGeometry();
         this.stats.update();
         this.camera.updateProjectionMatrix();
+        
     }
 
     public addControls() {
@@ -127,6 +178,76 @@ export class SceneComponent implements AfterViewInit {
         //this.controls.addEventListener('change', this.render);
     }
 
+    public createBoxGeometry(){
+        let boxGeometrys = new CreateGeometrys(10);
+        //this.cube = boxGeometrys.setBoxs();
+        this.cube = boxGeometrys.setSphere();
+        this.cube.forEach((cube) => {
+            this.scene.add(cube);
+        });
+        this.camera.position.z = 10;
+    }
+
+    public animationBoxGeometry(){
+        const radius = 30;
+        
+        this.radianX += 0.01;
+        this.radianY += 0.01;
+        this.cube.forEach((cube) => {
+            
+            //cube.rotation.x += 0.1;
+            //cube.rotation.y += 0.1;
+            
+            //cube.rotation.x += 30 * delta;
+            //cube.rotation.y += 30 * delta;
+            //cube.position.x = Math.cos(time) * 2;
+            //cube.position.y = Math.sin(time) * 2;
+            
+            //this.cube[0].position.x = Math.cos(this.radianX) * radius;
+            //this.cube[0].position.z = Math.sin(this.radianY) * radius;
+            
+            cube.position.x = Math.cos(this.radianX) * radius;
+            cube.position.y = Math.sin(this.radianY) * radius;
+            //cube.position.z = Math.sin(this.radianY) * radius;
+            
+        });
+        
+        // this.camera.position.x -= 0.05;
+        // this.camera.position.y -= 0.05;
+        // this.camera.position.z -= 0.05;
+
+        // this.orange.rotation.x += 0.1;
+    }
+
+    public setGui(){
+        this.gui = new dat.GUI();
+        let options = {
+            reset : () => {
+                console.log('reset click');
+                this.camera.position.x = 10;
+                this.camera.position.y = 10;
+                this.camera.position.z = 10;
+                //this.cube.position.x = 0;
+                //this.cube.position.y = 0;
+                //this.cube.position.z = 0;
+            }   
+        };
+        let cam = this.gui.addFolder('Camera');
+        //let boxCube = this.gui.addFolder('Cube');
+        // boxCube.add(this.cube.position, 'x', -200, 200, 1).listen();
+        // boxCube.add(this.cube.position, 'y', -200, 200, 1).listen();
+        // boxCube.add(this.cube.position, 'z', -200, 200, 1).listen();
+        // boxCube.open();
+        cam.add(this.camera.position, 'x', -200, 200, 1).listen();
+        cam.add(this.camera.position, 'y', -200, 200, 1).listen();
+        cam.add(this.camera.position, 'z', -200, 200, 1).listen();
+        cam.add(this.camera, 'fov', 1, 150).listen();
+        
+        cam.open();
+
+        this.gui.add(options, 'reset');
+    }
+    
     /* EVENTS */
     public onMouseDown(event: MouseEvent) {
         //console.log("onMouseDown");
@@ -172,75 +293,12 @@ export class SceneComponent implements AfterViewInit {
         this.camera.aspect = this.getAspectRatio();
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
-        this.render();
     }
 
     @HostListener('document:keypress', ['$event'])
     public onKeyPress(event: KeyboardEvent) {
         //console.log("onKeyPress: " + event.key);
     }
-
-    public createBoxGeometry(){
-        let boxGeometrys = new CreateGeometrys(100);
-        //this.cube = boxGeometrys.setBoxs();
-        this.cube = boxGeometrys.setSphere();
-        this.cube.forEach((cube) => {
-            this.scene.add(cube);
-        });
-        this.camera.position.z = 10;
-    }
-
-    public animationBoxGeometry(){
-        let cubes = [];
-        this.cube.forEach((cube) => {
-            let clock = new THREE.Clock();
-            let time = clock.getElapsedTime() * 3;
-            let delta = clock.getDelta();
-
-            cube.rotation.x += 0.1;
-            cube.rotation.y += 0.1;
-            
-            //cube.rotation.x += 30 * delta;
-            //cube.rotation.y += 30 * delta;
-            //cube.position.x = Math.cos(time) * 2;
-            //cube.position.y = Math.sin(time) * 2;
-        });
-        
-        // this.camera.position.x -= 0.05;
-        // this.camera.position.y -= 0.05;
-        // this.camera.position.z -= 0.05;
-
-        
-    }
-
-    public setGui(){
-        this.gui = new dat.GUI();
-        let options = {
-            reset : () => {
-                console.log('reset click');
-                this.camera.position.x = 10;
-                this.camera.position.y = 10;
-                this.camera.position.z = 10;
-                //this.cube.position.x = 0;
-                //this.cube.position.y = 0;
-                //this.cube.position.z = 0;
-            }   
-        };
-        let cam = this.gui.addFolder('Camera');
-        //let boxCube = this.gui.addFolder('Cube');
-        // boxCube.add(this.cube.position, 'x', -200, 200, 1).listen();
-        // boxCube.add(this.cube.position, 'y', -200, 200, 1).listen();
-        // boxCube.add(this.cube.position, 'z', -200, 200, 1).listen();
-        // boxCube.open();
-        cam.add(this.camera.position, 'x', -200, 200, 1).listen();
-        cam.add(this.camera.position, 'y', -200, 200, 1).listen();
-        cam.add(this.camera.position, 'z', -200, 200, 1).listen();
-        cam.add(this.camera, 'fov', 1, 150).listen();
-        
-        cam.open();
-
-        this.gui.add(options, 'reset');
-    }    
 }
 
 
