@@ -66,7 +66,7 @@ export class SceneComponent implements AfterViewInit {
         this.scene.add(axes);
         
         //this.daeLoader.load('./assets/model/audiR8/audiR8.dae', this.onDaeLoadingCompleted);
-        //this.objLoader.load('./assets/model/trophy.obj', this.onModelLoadingCompleted, (xhr)=>{ console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' ); });
+        this.objLoader.load('./assets/model/trophy.obj', this.onModelLoadingCompleted, (xhr)=>{ console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' ); });
         this.textureLoader.load("./assets/img/universe.jpg", this.onTextureLoadingCompleted);
         
             
@@ -77,7 +77,7 @@ export class SceneComponent implements AfterViewInit {
             map : data,
             side : THREE.BackSide
         });
-        let geometry_univ = new THREE.SphereGeometry(50, 32, 32);
+        let geometry_univ = new THREE.SphereGeometry(70, 32, 32);
         let mesh = new THREE.Mesh(geometry_univ, material_univ);
         
         this.scene.add(mesh);
@@ -189,11 +189,11 @@ export class SceneComponent implements AfterViewInit {
     }
 
     public animationBoxGeometry(){
-        const radius = 30;
+        const radius = 5;
         
-        this.radianX += 0.01;
-        this.radianY += 0.01;
-        this.cube.forEach((cube) => {
+        this.radianX += 0.005;
+        this.radianY += 0.005;
+        this.cube.forEach((cube, index) => {
             
             //cube.rotation.x += 0.1;
             //cube.rotation.y += 0.1;
@@ -206,9 +206,9 @@ export class SceneComponent implements AfterViewInit {
             //this.cube[0].position.x = Math.cos(this.radianX) * radius;
             //this.cube[0].position.z = Math.sin(this.radianY) * radius;
             
-            cube.position.x = Math.cos(this.radianX) * radius;
-            cube.position.y = Math.sin(this.radianY) * radius;
-            //cube.position.z = Math.sin(this.radianY) * radius;
+            cube.position.x = Math.cos(this.radianX * index) * radius * index;
+            //cube.position.y = Math.cos(this.radianX) * radius;
+            cube.position.z = Math.sin(this.radianY * index) * radius * index;
             
         });
         
@@ -307,7 +307,7 @@ class CreateGeometrys{
     public scene: THREE.Scene;
     public mesh: THREE.Mesh;
     public geometry = new THREE.BoxGeometry(1, 1, 1);
-    public sphere = new THREE.SphereGeometry(1, 30, 30);
+    public sphere = THREE.SphereGeometry;
     public meterial = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
 
     constructor(private boxIndex: number){
@@ -333,12 +333,14 @@ class CreateGeometrys{
     public setSphere(){
         let spheres = [];
         for(let i = 0; i < this.boxIndex; i++){
+            let radius = Math.random() * 3;
+            this.sphere = new THREE.SphereGeometry(radius, 30, 30);
             this.meterial = new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff });    
+            
             this.mesh = new THREE.Mesh(this.sphere, this.meterial);
             this.mesh.position.x = Math.random() * 50 - i;
             this.mesh.position.y = Math.random() * 50 - i;
             this.mesh.position.z = Math.random() * 50 - i;
-            this.mesh.radius = Math.random() + 10;
             
             //this.cube.scale.x = Math.random() + 0.5;
             //this.cube.scale.y = Math.random() + 0.5;
